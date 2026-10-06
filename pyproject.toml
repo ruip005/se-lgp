@@ -1,0 +1,48 @@
+[project]
+name = "se-lgp"
+version = "0.1.0"
+description = "Leitura de Língua Gestual Portuguesa (LGP) — UC Sistemas Embebidos, IPV"
+readme = "README.md"
+# MediaPipe não tem pacotes para Python 3.13: manter abaixo de 3.13
+requires-python = ">=3.11,<3.13"
+dependencies = [
+    "mediapipe>=0.10.20",
+    # opencv-contrib-python em vez de opencv-python: algumas versões do mediapipe
+    # já dependem dele, e ter os dois instalados parte o módulo cv2.
+    "opencv-contrib-python>=4.9",
+    "numpy",
+    "pandas>=2.2",
+    "scikit-learn>=1.5",
+    "joblib>=1.4",
+    "matplotlib>=3.8",
+    "pyserial>=3.5",
+    "python-dotenv>=1.0",
+    "pydantic-settings>=2.4",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.6",
+    "pytest>=8.0",
+    "pre-commit>=3.8",
+    "ipykernel>=6.29",
+]
+# Só necessários quando usarem os serviços Docker opcionais (MQTT / Postgres)
+services = [
+    "paho-mqtt>=2.1",
+    "psycopg[binary]>=3.2",
+]
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

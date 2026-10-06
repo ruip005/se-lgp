@@ -1,0 +1,62 @@
+# Serviços de apoio. Todos são OPCIONAIS e estão em "profiles":
+#   docker compose --profile mqtt up -d      -> broker MQTT (fase híbrida)
+#   docker compose --profile db up -d        -> PostgreSQL + Adminer (métricas, histórico)
+#   docker compose --profile ml run --rm ml  -> testes/treino num Linux reprodutível
+#
+# A captura da câmara e a porta série do Arduino correm FORA do Docker (no PC),
+# porque o Docker Desktop em Windows/macOS não dá acesso à webcam nem a USB.
+name: se-lgp
+
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2
+    profiles: ["mqtt"]
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./docker/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - mosquitto-data:/mosquitto/data
+    restart: unless-stopped
+
+  postgres:
+    # Fixado na 17: a imagem 18 mudou o caminho dos dados e parte volumes antigos
+    image: postgres:17-alpine
+    profiles: ["db"]
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-lgp}
+      POSTGRES_USER: ${POSTGRES_USER:-lgp}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no ficheiro .env}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  adminer:
+    image: adminer:latest
+    profiles: ["db"]
+    ports:
+      - "8081:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  ml:
+    build:
+      context: .
+      dockerfile: docker/python/Dockerfile
+    profiles: ["ml"]
+    working_dir: /app
+    volumes:
+      - .:/app
+    command: ["uv", "run", "pytest"]
+
+volumes:
+  mosquitto-data:
+  pgdata:

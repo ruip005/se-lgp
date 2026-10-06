@@ -1,0 +1,25 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# Segredos e configuração local
+.env
+
+# Dados e modelos (nunca no Git: tamanho e RGPD)
+data/*
+!data/.gitkeep
+models/*
+!models/.gitkeep
+
+# PlatformIO
+firmware/.pio/
+firmware/.vscode/
+
+# SO / IDE
+.DS_Store
+Thumbs.db
+.idea/
